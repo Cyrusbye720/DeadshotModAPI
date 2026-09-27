@@ -1,5 +1,7 @@
 # Deadshot Mod API
 
+[![Build](https://github.com/SniffBakaSniff/DeadshotModAPI/actions/workflows/build.yml/badge.svg)](https://github.com/SniffBakaSniff/DeadshotModAPI/actions/workflows/build.yml)
+
 A modding API for **Deadshot** that is currently in development.
 
 The goal of this project is to provide a common foundation for Deadshot mods, handling the BepInEx and Unity-side setup so individual mods can focus on their own functionality.
