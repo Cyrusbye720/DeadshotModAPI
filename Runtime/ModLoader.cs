@@ -39,7 +39,8 @@ public class ModLoader : MonoBehaviour
     /// </summary>
     public void Update()
     {
-        Input.CheckKeys();
+        Input.CheckKeys(); // Checks keyboard inputs
+        EventManager.Update(); // Handles updating events
     }
 
     /// <summary>

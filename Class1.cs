@@ -1,5 +1,6 @@
 ﻿using BepInEx;
 using BepInEx.Unity.IL2CPP;
+using HarmonyLib;
 using UnityEngine;
 
 namespace DeadshotModAPI;
@@ -11,9 +12,13 @@ namespace DeadshotModAPI;
 )]
 public class Plugin : BasePlugin
 {
+    private static Harmony _harmony;
+    
     public override void Load()
     {
         Debug.Log("Deadshot Mod API loaded.");
+        _harmony = new Harmony("DeadshotModAPI");
+        _harmony.PatchAll();
 
         AddComponent<ModLoader>();
     }
