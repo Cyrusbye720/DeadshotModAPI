@@ -9,59 +9,59 @@
     <ItemGroup>
 
     <Reference Include="BepInEx.Core">
-      <HintPath>F:\SteamLibrary\steamapps\common\Deadshot - Modded\Deadshot\BepInEx\core\BepInEx.Core.dll</HintPath>
+      <HintPath>C:\Code\DeadshotMods\DeadshotModAPI\lib\BepInEx.Core.dll</HintPath>
     </Reference>
 
     <Reference Include="BepInEx.Unity.IL2CPP">
-      <HintPath>F:\SteamLibrary\steamapps\common\Deadshot - Modded\Deadshot\BepInEx\core\BepInEx.Unity.IL2CPP.dll</HintPath>
+      <HintPath>C:\Code\DeadshotMods\DeadshotModAPI\lib\BepInEx.Unity.IL2CPP.dll</HintPath>
     </Reference>
 
     <Reference Include="Il2CppInterop.Runtime">
-      <HintPath>F:\SteamLibrary\steamapps\common\Deadshot - Modded\Deadshot\BepInEx\core\Il2CppInterop.Runtime.dll</HintPath>
+      <HintPath>C:\Code\DeadshotMods\DeadshotModAPI\lib\Il2CppInterop.Runtime.dll</HintPath>
     </Reference>
 
     <Reference Include="Il2Cppmscorlib">
-      <HintPath>F:\SteamLibrary\steamapps\common\Deadshot - Modded\Deadshot\BepInEx\interop\Il2Cppmscorlib.dll</HintPath>
+      <HintPath>C:\Code\DeadshotMods\DeadshotModAPI\libIl2Cppmscorlib.dll</HintPath>
     </Reference>
 
     <Reference Include="Assembly-CSharp">
-      <HintPath>F:\SteamLibrary\steamapps\common\Deadshot - Modded\Deadshot\BepInEx\interop\Assembly-CSharp.dll</HintPath>
+      <HintPath>C:\Code\DeadshotMods\DeadshotModAPI\libAssembly-CSharp.dll</HintPath>
     </Reference>
 
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>F:\SteamLibrary\steamapps\common\Deadshot - Modded\Deadshot\BepInEx\interop\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>C:\Code\DeadshotMods\DeadshotModAPI\libUnityEngine.CoreModule.dll</HintPath>
     </Reference>
 
     <Reference Include="Unity.InputSystem">
-      <HintPath>F:\SteamLibrary\steamapps\common\Deadshot - Modded\Deadshot\BepInEx\interop\Unity.InputSystem.dll</HintPath>
+      <HintPath>C:\Code\DeadshotMods\DeadshotModAPI\libUnity.InputSystem.dll</HintPath>
     </Reference>
 
     <Reference Include="Unity.TextMeshPro">
-      <HintPath>F:\SteamLibrary\steamapps\common\Deadshot - Modded\Deadshot\BepInEx\interop\Unity.TextMeshPro.dll</HintPath>
+      <HintPath>C:\Code\DeadshotMods\DeadshotModAPI\libUnity.TextMeshPro.dll</HintPath>
     </Reference>
 
     <Reference Include="UnityEngine.UI">
-      <HintPath>F:\SteamLibrary\steamapps\common\Deadshot - Modded\Deadshot\BepInEx\interop\UnityEngine.UI.dll</HintPath>
+      <HintPath>C:\Code\DeadshotMods\DeadshotModAPI\libUnityEngine.UI.dll</HintPath>
     </Reference>
 
     <Reference Include="UnityEngine.AudioModule">
-      <HintPath>F:\SteamLibrary\steamapps\common\Deadshot - Modded\Deadshot\BepInEx\interop\UnityEngine.AudioModule.dll</HintPath>
+      <HintPath>C:\Code\DeadshotMods\DeadshotModAPI\libUnityEngine.AudioModule.dll</HintPath>
     </Reference>
 
     <Reference Include="UnityEngine.DirectorModule">
-      <HintPath>F:\SteamLibrary\steamapps\common\Deadshot - Modded\Deadshot\BepInEx\interop\UnityEngine.DirectorModule.dll</HintPath>
+      <HintPath>C:\Code\DeadshotMods\DeadshotModAPI\libUnityEngine.DirectorModule.dll</HintPath>
     </Reference>
 
     <Reference Include="Deadshot.Data">
-      <HintPath>F:\SteamLibrary\steamapps\common\Deadshot - Modded\Deadshot\BepInEx\interop\Deadshot.Data.dll</HintPath>
+      <HintPath>C:\Code\DeadshotMods\DeadshotModAPI\libDeadshot.Data.dll</HintPath>
     </Reference>
 
     <Reference Include="UnityEngine.AssetBundleModule">
-      <HintPath>F:\SteamLibrary\steamapps\common\Deadshot - Modded\Deadshot\BepInEx\interop\UnityEngine.AssetBundleModule.dll</HintPath>
+      <HintPath>C:\Code\DeadshotMods\DeadshotModAPI\libUnityEngine.AssetBundleModule.dll</HintPath>
     </Reference>
 
     <Reference Include="Il2CppSystem">
-      <HintPath>F:\SteamLibrary\steamapps\common\Deadshot - Modded\Deadshot\BepInEx\interop\Il2CppSystem.dll</HintPath>
+      <HintPath>C:\Code\DeadshotMods\DeadshotModAPI\libIl2CppSystem.dll</HintPath>
     </Reference>
 
   </ItemGroup>
