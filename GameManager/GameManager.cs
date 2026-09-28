@@ -3,7 +3,6 @@ using System.IO;
 using UnityEngine;
 using UnitySceneManager = UnityEngine.SceneManagement;
 using Deadshot.Data;
-using Deadshot.Weapons;
 using DeadshotGameManager = Deadshot.GameManager;
 
 namespace DeadshotModAPI;
