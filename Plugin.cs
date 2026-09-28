@@ -1,20 +1,14 @@
-﻿using BepInEx;
+using BepInEx;
 using BepInEx.Unity.IL2CPP;
-using UnityEngine;
 
 namespace DeadshotModAPI;
 
-[BepInPlugin(
-    "com.subaka.deadshotmodapi",
-    "Deadshot Mod Api",
-    "0.0.1"
-)]
+[BepInPlugin("com.subaka.deadshotmodapi", "Deadshot Mod Api", "1.1.0")]
 public class Plugin : BasePlugin
 {
     public override void Load()
     {
-        Debug.Log("Deadshot Mod API loaded.");
-
+        Logger.Info("Deadshot Mod API loaded.");
         AddComponent<ModLoader>();
     }
 }

@@ -1,7 +1,7 @@
 namespace DeadshotModAPI;
 
 /// <summary>
-/// Represents a keyboard key that can be monitored through the Deadshot Mod API.
+/// Supported keyboard keys for input callbacks.
 /// </summary>
 public enum Key
 {
@@ -17,74 +17,31 @@ public enum Key
     F1, F2, F3, F4, F5, F6,
     F7, F8, F9, F10, F11, F12,
 
-    // Navigation
-    UpArrow,
-    DownArrow,
-    LeftArrow,
-    RightArrow,
-
-    Home,
-    End,
-    PageUp,
-    PageDown,
-
-    Insert,
-    Delete,
+    // Navigation & editing
+    UpArrow, DownArrow, LeftArrow, RightArrow,
+    Home, End, PageUp, PageDown,
+    Insert, Delete,
 
     // Modifiers
-    LeftShift,
-    RightShift,
-    LeftCtrl,
-    RightCtrl,
-    LeftAlt,
-    RightAlt,
+    LeftShift, RightShift,
+    LeftCtrl, RightCtrl,
+    LeftAlt, RightAlt,
 
-    // Special
-    Space,
-    Enter,
-    Escape,
-    Tab,
-    Backspace,
+    // Control & text editing
+    Space, Enter, Escape, Tab, Backspace,
 
-    // Punctuation
-    Minus,
-    Equals,
-    LeftBracket,
-    RightBracket,
-    Backslash,
-    Semicolon,
-    Apostrophe,
-    Comma,
-    Period,
-    Slash,
-    Backquote,
+    // Symbols
+    Minus, Equals, LeftBracket, RightBracket,
+    Backslash, Semicolon, Apostrophe, Comma,
+    Period, Slash, Backquote,
 
     // Numpad
-    Numpad0,
-    Numpad1,
-    Numpad2,
-    Numpad3,
-    Numpad4,
-    Numpad5,
-    Numpad6,
-    Numpad7,
-    Numpad8,
-    Numpad9,
+    Numpad0, Numpad1, Numpad2, Numpad3, Numpad4,
+    Numpad5, Numpad6, Numpad7, Numpad8, Numpad9,
+    NumpadPlus, NumpadMinus, NumpadMultiply,
+    NumpadDivide, NumpadPeriod, NumpadEnter,
 
-    NumpadPlus,
-    NumpadMinus,
-    NumpadMultiply,
-    NumpadDivide,
-    NumpadPeriod,
-    NumpadEnter,
-
-    // Locks
-    CapsLock,
-    NumLock,
-    ScrollLock,
-
-    // Misc
-    PrintScreen,
-    Pause,
-    Menu
+    // Locks & system
+    CapsLock, NumLock, ScrollLock,
+    PrintScreen, Pause, Menu
 }

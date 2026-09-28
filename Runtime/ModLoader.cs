@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using BepInEx;
@@ -7,79 +8,175 @@ using UnityEngine;
 namespace DeadshotModAPI;
 
 /// <summary>
-/// Responsible for discovering and loading Deadshot mods from the
-/// <c>/BepInEx/mods/</c> directory and processing the API's input system.
+/// Discovers and loads mods implementing <see cref="IDeadshotMod"/> from BepInEx/mods.
 /// </summary>
 public class ModLoader : MonoBehaviour
 {
-    /// <summary>
-    /// Called when the ModLoader component is initialized.
-    /// </summary>
+    public static readonly List<IDeadshotMod> LoadedMods = new();
+
     public void Awake()
     {
-        Debug.Log("Deadshot Mod API ModLoader Awake.");
+        Logger.Info("Deadshot Mod API ModLoader Awake.");
     }
 
-    /// <summary>
-    /// Called when the ModLoader component starts.
-    /// Loads all mods found in the <c>/BepInEx/mods/</c> directory.
-    /// </summary>
     public void Start()
     {
-        Debug.Log("Deadshot Mod API ModLoader Start.");
-
-        // Commented out as it breaks stuff
-        // SceneManager.LoadModsBundle(); 
-
-        LoadMods();
+        Logger.Info("Deadshot Mod API ModLoader Start.");
+        try
+        {
+            LoadMods();
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Unexpected error during Start mod loading: {ex}");
+        }
     }
 
-    /// <summary>
-    /// Called once per frame.
-    /// </summary>
     public void Update()
     {
-        Input.CheckKeys();
+        try
+        {
+            Input.CheckKeys();
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Unexpected error in ModLoader.Update: {ex}");
+        }
     }
 
-    /// <summary>
-    /// Scans the <c>/BepInEx/mods/</c> directory for DLL files
-    /// and attempts to load each one as a Deadshot mod.
-    /// </summary>
     private void LoadMods()
     {
-        string modsPath = Path.Combine(Paths.BepInExRootPath, "mods");
-
-        // Checks if the `/BepInEx/mods/` directory exists and if not then creates it.
-        if (!Directory.Exists(modsPath))
+        string rootPath;
+        try
         {
-            Directory.CreateDirectory(modsPath);
-            Debug.Log($"Created mod directory: {modsPath}");
+            rootPath = Paths.BepInExRootPath;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Failed to determine BepInEx root path: {ex}");
             return;
         }
 
-        foreach (string file in Directory.GetFiles(modsPath, "*.dll"))
+        if (string.IsNullOrWhiteSpace(rootPath))
+        {
+            Logger.Error("BepInEx root path is null or empty. Cannot discover mods.");
+            return;
+        }
+
+        string modsPath;
+        try
+        {
+            modsPath = Path.Combine(rootPath, "mods");
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Failed to construct mods directory path: {ex}");
+            return;
+        }
+
+        try
+        {
+            if (!Directory.Exists(modsPath))
+            {
+                Directory.CreateDirectory(modsPath);
+                Logger.Info($"Created mod directory: {modsPath}");
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Failed to verify or create mod directory '{modsPath}': {ex}");
+            return;
+        }
+
+        string[] modFiles;
+        try
+        {
+            modFiles = Directory.GetFiles(modsPath, "*.dll", SearchOption.AllDirectories);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Failed to enumerate mod files in '{modsPath}': {ex}");
+            return;
+        }
+
+        foreach (string file in modFiles)
         {
             LoadMod(file);
         }
     }
 
-    /// <summary>
-    /// Loads a mod assembly from the specified DLL and searches it for
-    /// concrete implementations of <see cref="IDeadshotMod"/>.
-    /// </summary>
-    /// <param name="path">The file path of the mod DLL to load.</param>
     private void LoadMod(string path)
     {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            Logger.Warning("Mod file path is null or empty.");
+            return;
+        }
+
+        if (!File.Exists(path))
+        {
+            Logger.Error($"Mod file does not exist: {path}");
+            return;
+        }
+
+        Assembly assembly;
         try
         {
-            // Loads the dll file
-            Assembly assembly = Assembly.LoadFrom(path);
+            assembly = Assembly.LoadFrom(path);
+        }
+        catch (BadImageFormatException ex)
+        {
+            Logger.Error($"Corrupt or invalid mod assembly '{Path.GetFileName(path)}': {ex.Message}");
+            return;
+        }
+        catch (FileNotFoundException ex)
+        {
+            Logger.Error($"Mod assembly file not found '{path}': {ex.Message}");
+            return;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Failed to load assembly '{Path.GetFileName(path)}': {ex}");
+            return;
+        }
 
-            foreach (Type type in assembly.GetTypes())
+        Type[] types;
+        try
+        {
+            types = assembly.GetTypes();
+        }
+        catch (ReflectionTypeLoadException ex)
+        {
+            Logger.Warning($"Type load warnings encountered while inspecting '{Path.GetFileName(path)}':");
+            if (ex.LoaderExceptions != null)
             {
-                // Checks whether the loaded class implements IDeadshotMod
-                // and isn't an interface or abstract class.
+                foreach (var loaderEx in ex.LoaderExceptions)
+                {
+                    if (loaderEx != null)
+                    {
+                        Logger.Warning($"  Loader exception: {loaderEx.Message}");
+                    }
+                }
+            }
+            types = ex.Types;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Failed to retrieve types from '{Path.GetFileName(path)}': {ex}");
+            return;
+        }
+
+        if (types == null)
+            return;
+
+        foreach (Type type in types)
+        {
+            if (type == null)
+                continue;
+
+            try
+            {
                 if (!typeof(IDeadshotMod).IsAssignableFrom(type) ||
                     type.IsInterface ||
                     type.IsAbstract)
@@ -88,18 +185,34 @@ public class ModLoader : MonoBehaviour
                 }
 
                 IDeadshotMod mod = (IDeadshotMod)Activator.CreateInstance(type)!;
+                if (mod == null)
+                {
+                    Logger.Warning($"Failed to instantiate mod '{type.FullName}' from '{path}'.");
+                    continue;
+                }
 
-                Debug.Log($"Loading mod: {mod.Name}");
-                Debug.Log($"  Description: {mod.Description}");
-                Debug.Log($"  Creator: {mod.Creator}");
-                Debug.Log($"  Version: {mod.Version}");
+                string modName = "Unknown";
+                try
+                {
+                    modName = mod.Name;
+                }
+                catch (Exception nameEx)
+                {
+                    Logger.Warning($"Failed to read mod name from '{type.FullName}': {nameEx.Message}");
+                }
+
+                Logger.Info($"Loading mod: {modName}");
+                try { Logger.Info($"  Description: {mod.Description}"); } catch { }
+                try { Logger.Info($"  Creator: {mod.Creator}"); } catch { }
+                try { Logger.Info($"  Version: {mod.Version}"); } catch { }
 
                 mod.Load();
+                LoadedMods.Add(mod);
             }
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"Failed to load mod '{Path.GetFileName(path)}': {ex}");
+            catch (Exception ex)
+            {
+                Logger.Error($"Failed to instantiate or load mod '{type?.FullName}' from '{Path.GetFileName(path)}': {ex}");
+            }
         }
     }
 }

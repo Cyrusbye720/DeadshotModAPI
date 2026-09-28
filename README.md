@@ -1,78 +1,142 @@
 # Deadshot Mod API
 
-[![Build](https://github.com/SniffBakaSniff/DeadshotModAPI/actions/workflows/build.yml/badge.svg)](https://github.com/SniffBakaSniff/DeadshotModAPI/actions/workflows/build.yml)
+[![Build](https://github.com/DemonZ-Development/DeadshotModAPI/actions/workflows/build.yml/badge.svg)](https://github.com/DemonZ-Development/DeadshotModAPI/actions/workflows/build.yml)
+[![Framework](https://img.shields.io/badge/.NET-6.0-purple.svg)](https://dotnet.microsoft.com/download/dotnet/6.0)
+[![Platform](https://img.shields.io/badge/BepInEx-6%20IL2CPP-blue.svg)](https://builds.bepinex.dev/projects/bepinex_be)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A modding API for **Deadshot** that is currently in development.
+A modding library for **Deadshot** built on BepInEx 6 IL2CPP and .NET 6.
 
-The goal of this project is to provide a common foundation for Deadshot mods, handling the BepInEx and Unity-side setup so individual mods can focus on their own functionality.
+DeadshotModAPI handles mod discovery, assembly loading, key bindings, and scene loading so you can write mods without setting up BepInEx plugins or IL2CPP interop manually.
 
-# Requirements
+---
 
-### For Players
+## Requirements
 
+### Players
 * **Deadshot**
-* **BepInEx 6 (Bleeding Edge)** installed and configured for Deadshot
-* **Deadshot Mod API** installed in the game's `BepInEx/plugins` directory
+* **BepInEx 6 (Bleeding Edge IL2CPP)**
+* **`DeadshotModAPI.dll`** in `<GameDir>/BepInEx/plugins/`
 
-### For Mod Developers
+### Mod Developers
+* [.NET 6 SDK](https://dotnet.microsoft.com/download/dotnet/6.0)
+* A C# editor (Visual Studio, Rider, or VS Code)
+* A reference to `DeadshotModAPI.dll` in your project
 
-* **.NET 6**
-* A C# development environment
-* A reference to **`DeadshotModAPI.dll`** in the mod project
+---
 
-Mods do **not** need to be registered as BepInEx plugins. The API handles mod discovery and loading.
-
-[BepInEx Bleeding Edge](https://builds.bepinex.dev/projects/bepinex_be)
-
-## Mod Structure
-
-Mods are loaded from:
+## Directory Layout
 
 ```text
-BepInEx/
-├── plugins/
-│   └── DeadshotModAPI.dll
-│
-└── mods/
-    └── MyMod.dll
+Deadshot/
+├── BepInEx/
+│   ├── plugins/
+│   │   └── DeadshotModAPI.dll       <-- API plugin
+│   └── mods/
+│       ├── SpeedrunMod.dll          <-- Your mod DLLs
+│       └── CustomMod/
+│           └── CustomMod.dll        <-- Subdirectories are scanned too
 ```
 
-Mods must reference **`DeadshotModAPI.dll`** when being built. The API provides the interfaces and functionality that mods use at runtime.
+At startup, the API scans `BepInEx/mods/` recursively for DLLs, finds classes implementing `IDeadshotMod`, and calls their `Load()` method.
 
-A mod implements `IDeadshotMod` and provides its metadata and `Load()` method.
+---
 
-# Example Mod
+## Quickstart: Creating a Mod
 
-A simple example demonstrating how to create a Deadshot mod using the Deadshot Mod API.
+1. Create a class library targeting .NET 6:
+   ```bash
+   dotnet new classlib -n SpeedrunMod -f net6.0
+   ```
+2. Reference `DeadshotModAPI.dll` in your `.csproj`:
+   ```xml
+   <ItemGroup>
+     <Reference Include="DeadshotModAPI">
+       <HintPath>path\to\DeadshotModAPI.dll</HintPath>
+     </Reference>
+   </ItemGroup>
+   ```
+3. Implement `IDeadshotMod`:
+   ```csharp
+   using DeadshotModAPI;
 
-```csharp
-using DeadshotModAPI;
+   public class SpeedrunMod : IDeadshotMod
+   {
+       public string Name => "Deadshot Speedrunning";
+       public string Description => "A Mod made for speedrunning Deadshot.";
+       public string Creator => "Subaka";
+       public string Version => "0.2.0";
 
-public class ExampleMod : IDeadshotMod
-{
-    public string Name => "Example Mod";
-    public string Description => "A simple example mod.";
-    public string Creator => "Your Name";
-    public string Version => "1.0.0";
+       public void Load()
+       {
+           Logger.Debug("Deadshot Speedrun loaded through Mod API.");
 
-    public void Load()
-    {
-        Input.OnKeyPressed(Key.F12, OnF12Pressed);
+           Input.OnKeyPressed(Key.F1, () => RestartLevelMethod(false));
+           Input.OnKeyPressed(Key.F2, () => RestartLevelMethod(true));
+       }
 
-        Logger.Info("Example Mod loaded.");
-    }
+       private void RestartLevelMethod(bool playCutscene)
+       {
+           GameManager.RestartLevel(playCutscene);
+       }
+   }
+   ```
+4. Build your mod:
+   ```bash
+   dotnet build -c Release
+   ```
+5. Copy the output DLL to `<Deadshot>/BepInEx/mods/`.
 
-    private void OnF12Pressed()
-    {
-        Logger.Info("F12 was pressed!");
-    }
-}
+See [`examples/ExampleMod/`](examples/ExampleMod/) for a working project template.
+
+---
+
+## API Reference
+
+### `IDeadshotMod`
+Interface implemented by mods:
+* `Name` - Mod display name.
+* `Description` - Summary of mod behavior.
+* `Creator` - Author name.
+* `Version` - Version string (e.g. `"0.2.0"`).
+* `Load()` - Runs once at game startup.
+
+### `Input`
+Keyboard listener:
+* `Input.OnKeyPressed(Key key, Action callback)` - Registers a callback triggered when `key` is pressed.
+* `Input.RemoveKeyPressed(Key key, Action callback)` - Unregisters a callback.
+
+### `SceneManager`
+Scene utilities:
+* `SceneManager.Load(string sceneName)` - Loads a scene by name.
+* `SceneManager.Load(int sceneIndex)` - Loads a scene by build index.
+
+### `GameManager`
+Level lifecycle utilities:
+* `GameManager.RestartLevel(bool playCutscene = true)` - Restarts the active level. Set `playCutscene: false` to skip the intro cutscene.
+
+### `Logger`
+Unity and BepInEx console logger:
+* `Logger.Info(string message)` / `Logger.Log(string message)`
+* `Logger.Warning(string message)`
+* `Logger.Error(string message)`
+* `Logger.Debug(string message)`
+
+---
+
+## Building from Source
+
+```bash
+git clone https://github.com/DemonZ-Development/DeadshotModAPI.git
+cd DeadshotModAPI
+dotnet build DeadshotModAPI.csproj -c Release
+dotnet test DeadshotModAPI.Tests/DeadshotModAPI.Tests.csproj
 ```
 
-The mod registers a callback for **F12** when it loads. When F12 is pressed, the API invokes `OnF12Pressed()`, which logs a message.
+References point to `lib/` with relative paths, so the solution builds on any machine with the .NET 6 SDK.
 
-## Project Goals
+---
 
-The long-term goal is to make creating Deadshot mods as straightforward as possible while keeping game-specific and BepInEx-specific implementation details inside the API.
+## License
 
-This project is experimental and should not currently be considered a stable modding API.
+MIT. See [LICENSE](LICENSE).

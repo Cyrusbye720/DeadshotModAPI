@@ -1,23 +1,28 @@
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
-using System.Globalization;
 
 namespace DeadshotModAPI;
 
+/// <summary>
+/// Provides keyboard input listening and event dispatch for Deadshot mods.
+/// </summary>
 public static class Input
 {
     private static readonly Dictionary<Key, Action> _keyActions = new();
 
     /// <summary>
-    /// Registers a method to be called when the specified key is pressed.
-    /// Multiple methods can be registered to the same key.
+    /// Registers a callback to be invoked when the specified key is pressed.
     /// </summary>
     /// <param name="key">The key to listen for.</param>
-    /// <param name="method">The method to invoke when the key is pressed.</param>
+    /// <param name="method">The callback to invoke when the key is pressed.</param>
     public static void OnKeyPressed(Key key, Action method)
     {
+        if (method == null)
+            return;
+
         if (_keyActions.TryGetValue(key, out var existing))
             _keyActions[key] = existing + method;
         else
@@ -25,27 +30,57 @@ public static class Input
     }
 
     /// <summary>
-    /// Invokes all methods registered to the specified key.
-    /// This method is called internally by the input system when a key press is detected.
+    /// Unregisters a previously registered callback from a key.
     /// </summary>
-    /// <param name="key">The key whose registered methods should be invoked.</param>
-    internal static void TriggerKey(Key key)
+    /// <param name="key">The key being monitored.</param>
+    /// <param name="method">The callback to remove.</param>
+    public static void RemoveKeyPressed(Key key, Action method)
     {
-        if (_keyActions.TryGetValue(key, out var action))
+        if (method == null)
+            return;
+
+        if (_keyActions.TryGetValue(key, out var existing))
         {
-            action?.Invoke();
+            var updated = existing - method;
+            if (updated == null)
+                _keyActions.Remove(key);
+            else
+                _keyActions[key] = updated;
         }
     }
 
-    /// <summary>
-    /// Converts the first character of a string to lowercase.
-    /// This is used to convert PascalCase names into camelCase names.
-    /// </summary>
-    /// <param name="text">The string to convert.</param>
-    /// <returns>
-    /// The string with its first character converted to lowercase,
-    /// or the original string if it is null, empty, or whitespace.
-    /// </returns>
+    internal static void TriggerKey(Key key)
+    {
+        if (_keyActions.TryGetValue(key, out var action) && action != null)
+        {
+            Delegate[] delegates;
+            try
+            {
+                delegates = action.GetInvocationList();
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Error getting invocation list for key {key}: {ex}");
+                return;
+            }
+
+            foreach (var handler in delegates)
+            {
+                if (handler is Action callback)
+                {
+                    try
+                    {
+                        callback();
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Error($"Error executing callback for key {key}: {ex}");
+                    }
+                }
+            }
+        }
+    }
+
     public static string ToCamelCase(this string text)
     {
         if (string.IsNullOrWhiteSpace(text))
@@ -54,38 +89,47 @@ public static class Input
         return char.ToLowerInvariant(text[0]) + text.Substring(1);
     }
 
-    /// <summary>
-    /// Determines whether the specified key was pressed during the current frame.
-    /// </summary>
-    /// <param name="key">The key to check.</param>
-    /// <returns>
-    /// <c>true</c> if the key was pressed during the current frame;
-    /// otherwise, <c>false</c>.
-    /// </returns>
     private static bool IsPressed(Key key)
     {
-        string keyName = $"{key.ToString().ToCamelCase()}Key";
-
-        var property = typeof(Keyboard).GetProperty(keyName);
-
-        if (property == null)
+        if (Keyboard.current == null)
             return false;
 
-        var keyControl = property.GetValue(Keyboard.current) as KeyControl;
+        try
+        {
+            string keyName = $"{key.ToString().ToCamelCase()}Key";
+            var property = typeof(Keyboard).GetProperty(keyName);
 
-        return keyControl?.wasPressedThisFrame ?? false;
+            if (property == null)
+                return false;
+
+            var keyControl = property.GetValue(Keyboard.current) as KeyControl;
+            return keyControl?.wasPressedThisFrame ?? false;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Error checking key state for {key}: {ex}");
+            return false;
+        }
     }
 
-    /// <summary>
-    /// Checks all keys currently registered with the input system
-    /// and triggers their associated methods when pressed.
-    /// </summary>
     internal static void CheckKeys()
     {
-        foreach (var key in _keyActions.Keys)
+        try
         {
-            if (IsPressed(key))
-                TriggerKey(key);
+            if (Keyboard.current == null)
+                return;
+
+            // Snapshot keys to allow modifying bindings during callback execution
+            var keys = _keyActions.Keys.ToArray();
+            foreach (var key in keys)
+            {
+                if (IsPressed(key))
+                    TriggerKey(key);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Error checking keys: {ex}");
         }
     }
 }

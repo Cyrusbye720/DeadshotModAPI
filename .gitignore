@@ -1,2 +1,17 @@
-/obj
-/bin
+# Build results
+bin/
+obj/
+TestResults/
+
+# User / IDE files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
