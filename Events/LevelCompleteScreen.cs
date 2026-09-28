@@ -10,7 +10,7 @@ public class LevelCompleteScreen
 
     public void SetTime(string text)
     {
-        _menu.timeText.text = $"Time: {text}";
+        _menu.timeText.text = $"{text}";
     }
 
     // TODO: Add the rest 

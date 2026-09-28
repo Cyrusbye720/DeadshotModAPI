@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [1.0.0-dev-alpha] - 2026-09-28
+
+### Added
+- `EventManager.cs` for events.
+- `LevelCompleteScreen.cs` for modifying `Deadshot.UI.Menus.LevelCompletedMenu`.
+- `Harmony v2.4.2` for patching game instances.
+
+### Changed
+- Updated `Plugin.cs` version to `v1.0.0-dev-alpha`.
+- Updated `Plugin.Load()` to add `EventManager` as component.
+- Added null checks and `try/catch` exception handling to EventManager.
+
+### Fixed
+- Fixed runtime loading for `GameAssembly.dll` in `DeadshotModAPI.Tests.csproj`.
+- Fixed git merge conflict errors with `origin/dev`.
+- Fixed `LevelCompletedScreen.SetTime()` having a hardcoded text.
+- Fixed spelling mistake in `Plugin.cs`
 
 ## [1.1.0] - 2026-09-28
 
