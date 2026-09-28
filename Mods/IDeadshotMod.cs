@@ -1,32 +1,32 @@
 namespace DeadshotModAPI;
 
 /// <summary>
-/// Defines the required structure and metadata for a Deadshot mod.
+/// Interface implemented by Deadshot mods.
 /// </summary>
 public interface IDeadshotMod
 {
     /// <summary>
-    /// Gets the display name of the mod.
+    /// Display name of the mod.
     /// </summary>
     string Name { get; }
 
     /// <summary>
-    /// Gets a description of what the mod does.
+    /// Short description of what the mod does.
     /// </summary>
     string Description { get; }
 
     /// <summary>
-    /// Gets the name of the mod's creator.
+    /// Name or handle of the author.
     /// </summary>
     string Creator { get; }
 
     /// <summary>
-    /// Gets the version of the mod.
+    /// Version of the mod (e.g. 1.0.0).
     /// </summary>
     string Version { get; }
 
     /// <summary>
-    /// Called when the mod is loaded by the Deadshot Mod API.
+    /// Called when the mod is loaded by the API.
     /// </summary>
     void Load();
 }

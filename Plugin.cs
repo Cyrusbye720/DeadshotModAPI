@@ -1,25 +1,20 @@
-﻿using BepInEx;
+using BepInEx;
 using BepInEx.Unity.IL2CPP;
 using HarmonyLib;
-using UnityEngine;
 
 namespace DeadshotModAPI;
 
-[BepInPlugin(
-    "com.subaka.deadshotmodapi",
-    "Deadshot Mod Api",
-    "0.0.1"
-)]
+[BepInPlugin("com.subaka.deadshotmodapi", "Deadshot Mod API", "v1.0.0-dev-alpha")]
 public class Plugin : BasePlugin
 {
     private static Harmony _harmony;
     
     public override void Load()
     {
-        Debug.Log("Deadshot Mod API loaded.");
+        Logger.Info("Deadshot Mod API loaded.");
         _harmony = new Harmony("DeadshotModAPI");
         _harmony.PatchAll();
-
         AddComponent<ModLoader>();
+        AddComponent<EventManager>();
     }
 }
