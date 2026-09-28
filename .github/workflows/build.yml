@@ -1,14 +1,17 @@
-name: Build
+name: Build and Release
 
 on:
   push:
     branches:
-      - dev
       - main
+    tags:
+      - 'v*'
   pull_request:
     branches:
-      - dev
       - main
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -29,8 +32,21 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release --no-restore
 
-      - name: Upload build
+      - name: Run Tests
+        run: dotnet test --configuration Release --no-build --verbosity normal
+
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: DeadshotModAPI
           path: '**/bin/Release/net6.0/DeadshotModAPI.dll'
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: DeadshotModAPI ${{ github.ref_name }}
+          draft: false
+          prerelease: true
+          generate_release_notes: true
+          files: '**/bin/Release/net6.0/DeadshotModAPI.dll'
