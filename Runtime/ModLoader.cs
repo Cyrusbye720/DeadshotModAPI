@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Threading.Tasks;
 using BepInEx;
 using UnityEngine;
 
@@ -25,6 +26,7 @@ public class ModLoader : MonoBehaviour
         try
         {
             LoadMods();
+            SceneManager.LoadModsBundle();
         }
         catch (Exception ex)
         {

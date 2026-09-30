@@ -65,6 +65,10 @@
       <HintPath>lib\Il2CppSystem.dll</HintPath>
     </Reference>
 
+    <Reference Include="UniverseLib">
+      <HintPath>lib\UniverseLib.BIE.IL2CPP.Interop.dll</HintPath>
+    </Reference>
+
   </ItemGroup>
 
   <ItemGroup>
