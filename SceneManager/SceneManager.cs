@@ -1,10 +1,7 @@
 using System;
-using System.IO;
 using UnityEngine;
 using Deadshot;
-using BepInEx;
-using System.Runtime.CompilerServices;
-using UniverseLib;
+using System.Collections.Generic;
 
 namespace DeadshotModAPI;
 
@@ -58,127 +55,36 @@ public static class SceneManager
     }
 
     /// <summary>
-    /// Loads the Deadshot Mod API UI asset bundle from BepInEx/mods/DeadshotModAPI.
+    /// Loads the Deadshot Mod API asset bundles from BepInEx/mods/DeadshotModAPI.
     /// </summary>
-    internal static void LoadModsBundle()
+    /// <remarks>
+    /// This is just a testing class to figure out loading assets.
+    /// Need to move this to a seperate class.
+    /// Add more functionality to this to give back to modders.
+    /// </remarks>
+    public static void LoadModsBundle()
     {
-        string path = Path.Combine(
-            Paths.BepInExRootPath,
-            "mods",
-            "DeadshotModAPI",
-            "deadshotmodapi"
-        );
-
-        if (!File.Exists(path))
-        {
-            Logger.Error($"Mod bundle does not exist: {path}");
-            return;
-        }
-
         try
         {
-            Logger.Info($"Loading AssetBundle: {path}");
-
-            UniverseLib.AssetBundle bundle = UniverseLib.AssetBundle.LoadFromFile(path, 0u, 0UL);
-
-            if (bundle == null)
+            AssetBundleManager bundleManager = new();
+            List<string> bundlesFiles = new()
             {
-                Logger.Error("UniverseLib failed to load the AssetBundle.");
-                return;
+                "DeadshotModApi/deadshotmodapi", // bundle 0
+                "DeadshotModApi/deadshotapi_assets" // bundle 1
+            };
+
+            List<UniverseLib.AssetBundle> bundles = bundleManager.LoadAssetBundles(bundlesFiles);
+
+            if (bundles == null)
+            {
+                Logger.Error("Failed to load asset bundles.");
             }
 
-            Logger.Info($"Loaded AssetBundle: {bundle.name}");
-
-            var assets = bundle.LoadAllAssets();
-
-            Logger.Info($"Loaded {assets.Length} assets from bundle.");
-
-            foreach (var asset in assets)
-            {
-                Logger.Info(
-                    $"Asset: {asset.name} ({asset.GetType().FullName})"
-                );
-            }
-
-            Logger.Info("Mods Menu bundle loaded successfully.");
+            Logger.Info($"Loaded {bundles.Count} asset bundles.");
         }
         catch (Exception ex)
         {
             Logger.Error($"Failed to load Mods Menu bundle: {ex}");
-        }
-    }
-}
-
-// Wrote this calss before trying UniverseLib
-// depending on if i can get UniversLib to work 
-// this may get removed.
-public class AssetBundleLoader
-{
-    public bool LoadAssetBundle(string filePath)
-    {
-        try
-        {
-            if (!File.Exists(filePath))
-            {
-                Debug.LogError($"AssetBundle file not found at: {filePath}");
-            }
-
-            byte[] bundleBytes = LoadBundleToMemory(filePath);
-
-            if (bundleBytes.Length == 0)
-            {
-                Logger.Error("AssetBundle file is empty.");
-            }
-
-            LoadBundleFromMemory(bundleBytes);
-            return true;
-        }
-        catch   (Exception ex)
-        {
-            Logger.Error($"Failed to load asset bundle. {ex}");
-            return false;
-        }
-    }
-    
-    internal static byte[] LoadBundleToMemory(string filePath)
-    {
-        try
-        {
-            if (!File.Exists(filePath))
-            {
-                Debug.LogError($"AssetBundle file not found at: {filePath}");
-                return null;
-            }
-
-            byte[] bundleBytes = File.ReadAllBytes(filePath);
-
-            return bundleBytes;
-        }
-        catch (Exception ex)
-        {
-            Logger.Error($"Failed to load bundle to memory: {ex}");
-            return null;
-        }
-    }
-
-    internal static void LoadBundleFromMemory(byte[] bundleBytes)
-    {
-        try
-        {
-            UniverseLib.AssetBundle bundle = UniverseLib.AssetBundle.LoadFromMemory(bundleBytes);
-
-            if (bundle == null)
-            {
-                Debug.LogError("Failed to load AssetBundle.");
-                return;
-            }
-            Logger.Log($"Loaded AssetBundle: {bundle.name}");
-
-            bundle.Unload(false);
-        }
-        catch (Exception ex)
-        {
-            Logger.Error($"Failed to load asset bundle from memory: {ex}");
         }
     }
 }

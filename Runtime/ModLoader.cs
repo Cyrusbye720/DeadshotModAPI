@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -170,12 +171,16 @@ public class ModLoader : MonoBehaviour
         }
 
         if (types == null)
+        {
             return;
+        }
 
         foreach (Type type in types)
         {
             if (type == null)
+            {
                 continue;
+            }
 
             try
             {
