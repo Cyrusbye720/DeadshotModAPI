@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 
@@ -21,12 +22,18 @@ public static class Input
     public static void OnKeyPressed(Key key, Action method)
     {
         if (method == null)
+        {
             return;
+        }
 
-        if (_keyActions.TryGetValue(key, out var existing))
+        if (_keyActions.TryGetValue(key, out Action existing))
+        {
             _keyActions[key] = existing + method;
+        }
         else
+        {
             _keyActions[key] = method;
+        }
     }
 
     /// <summary>
@@ -37,21 +44,27 @@ public static class Input
     public static void RemoveKeyPressed(Key key, Action method)
     {
         if (method == null)
-            return;
-
-        if (_keyActions.TryGetValue(key, out var existing))
         {
-            var updated = existing - method;
+            return;
+        }
+
+        if (_keyActions.TryGetValue(key, out Action existing))
+        {
+            Action updated = existing - method;
             if (updated == null)
+            {
                 _keyActions.Remove(key);
+            }
             else
+            {
                 _keyActions[key] = updated;
+            }
         }
     }
 
     internal static void TriggerKey(Key key)
     {
-        if (_keyActions.TryGetValue(key, out var action) && action != null)
+        if (_keyActions.TryGetValue(key, out Action action) && action != null)
         {
             Delegate[] delegates;
             try
@@ -64,7 +77,7 @@ public static class Input
                 return;
             }
 
-            foreach (var handler in delegates)
+            foreach (Delegate handler in delegates)
             {
                 if (handler is Action callback)
                 {
@@ -84,7 +97,9 @@ public static class Input
     public static string ToCamelCase(this string text)
     {
         if (string.IsNullOrWhiteSpace(text))
+        {
             return text;
+        }
 
         return char.ToLowerInvariant(text[0]) + text.Substring(1);
     }
@@ -92,15 +107,19 @@ public static class Input
     private static bool IsPressed(Key key)
     {
         if (Keyboard.current == null)
+        {
             return false;
+        }
 
         try
         {
             string keyName = $"{key.ToString().ToCamelCase()}Key";
-            var property = typeof(Keyboard).GetProperty(keyName);
+            PropertyInfo property = typeof(Keyboard).GetProperty(keyName);
 
             if (property == null)
+            {
                 return false;
+            }
 
             var keyControl = property.GetValue(Keyboard.current) as KeyControl;
             return keyControl?.wasPressedThisFrame ?? false;
@@ -117,14 +136,15 @@ public static class Input
         try
         {
             if (Keyboard.current == null)
+            {
                 return;
+            }
 
             // Snapshot keys to allow modifying bindings during callback execution
-            var keys = _keyActions.Keys.ToArray();
-            foreach (var key in keys)
+            Key[] keys = _keyActions.Keys.ToArray();
+            foreach (Key key in keys.Where(IsPressed))
             {
-                if (IsPressed(key))
-                    TriggerKey(key);
+                TriggerKey(key);
             }
         }
         catch (Exception ex)

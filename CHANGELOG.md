@@ -4,6 +4,37 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [Unreleased] - 2026-10-02
+
+### Added
+- `SceneLoadWaiter` MonoBehaviour for additive custom-scene loading while preserving the existing gameplay scene and player.
+- `SceneManager.LoadScene(string)` replacing the old `Load()` method — unloads an already-loaded scene before re-loading it, and bootstraps `C1L2` if it is not yet loaded.
+- `AssetBundleManager.GetPlayerObject()` helper to retrieve the player `GameObject` from `Deadshot.GameManager`.
+- `AssetBundleManager.SpawnPlayerObject()` helper to instantiate the player object.
+- `LevelCompleteScreen.SetSecret(string)` to write to `_menu.secretText`.
+- `Plugin.cs` now registers `SceneLoadWaiter` as a component on startup.
+- `UnityEngine.UIModule` and `UnityEngine.PhysicsModule` references added to `DeadshotModAPI.csproj`.
+- `.editorconfig` with comprehensive C# and project-wide style rules, including test-project overrides.
+- `EnforceCodeStyleInBuild` enabled in `DeadshotModAPI.csproj`.
+- `UniverseLib` explicit project reference added to `DeadshotModAPI.csproj`.
+
+### Changed
+- `SceneManager.LoadModsBundle()` is now `public` and delegates to `AssetBundleManager` instead of using a raw `AssetBundle` field.
+- `AssetBundleManager` bundle root path changed from `BepInEx/mods` to `BepInEx/plugins/mods`.
+- `AssetBundleManager.LoadAssetBundles()` now returns an empty `List<>` instead of `null` on individual bundle load failure.
+- `Input.CheckKeys()` refactored to filter with `Where(IsPressed)` before iterating, removing the inner `if` branch.
+- `Input.CheckKeys()` loop variables changed from `var` to explicit `Key[]` / `Key` types.
+- `EventManager` level-time comparison changed from `==` to `< 0.001f` float epsilon check.
+- `LevelCompleteScreen.SetTime()` simplified — redundant string interpolation removed.
+- `Plugin.cs` `_harmony` static field removed; `Harmony` instance is now a local variable.
+- `ModLoader.Start()` calls `SceneManager.LoadModsBundle()` on startup.
+- `ModLoader` null-guard braces added for `types == null` and `type == null` checks.
+- `SceneManager` using directives re-ordered and `Deadshot.Player` namespace added.
+
+### Fixed
+- Fixed `catch(Exception` missing space — normalised to `catch (Exception` throughout `EventManager.cs`.
+- Fixed stray blank line inside `EventManager.LevelPlaytimeEvent()`.
+
 ## [1.0.0-dev-alpha] - 2026-09-28
 
 ### Added

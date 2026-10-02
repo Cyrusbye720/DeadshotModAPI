@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using BepInEx;
@@ -14,9 +15,10 @@ namespace DeadshotModAPI;
 /// </summary>
 public class ModLoader : MonoBehaviour
 {
-    public static readonly List<IDeadshotMod> LoadedMods = new();
+    internal static readonly List<IDeadshotMod> LoadedMods = new();
 
     public void Awake()
+
     {
         Logger.Info("Deadshot Mod API ModLoader Awake.");
     }
@@ -47,12 +49,12 @@ public class ModLoader : MonoBehaviour
         }
     }
 
-    private void LoadMods()
+    private static void LoadMods()
     {
         string rootPath;
         try
         {
-            rootPath = Paths.BepInExRootPath;
+            rootPath = Path.Combine(Paths.BepInExRootPath, "plugins");
         }
         catch (Exception ex)
         {
@@ -109,7 +111,7 @@ public class ModLoader : MonoBehaviour
         }
     }
 
-    private void LoadMod(string path)
+    private static void LoadMod(string path)
     {
         if (string.IsNullOrWhiteSpace(path))
         {
@@ -123,65 +125,24 @@ public class ModLoader : MonoBehaviour
             return;
         }
 
-        Assembly assembly;
-        try
+        Assembly assembly = GetAssembly(path);
+
+        if (assembly == null)
         {
-            assembly = Assembly.LoadFrom(path);
-        }
-        catch (BadImageFormatException ex)
-        {
-            Logger.Error($"Corrupt or invalid mod assembly '{Path.GetFileName(path)}': {ex.Message}");
-            return;
-        }
-        catch (FileNotFoundException ex)
-        {
-            Logger.Error($"Mod assembly file not found '{path}': {ex.Message}");
-            return;
-        }
-        catch (Exception ex)
-        {
-            Logger.Error($"Failed to load assembly '{Path.GetFileName(path)}': {ex}");
+            Logger.Warning($"Failed to load assembly: {Path.GetFileName(path)}");
             return;
         }
 
-        Type[] types;
-        try
+        Type[] types = GetTypes(assembly);
+
+        if (types == null || types.Length == 0)
         {
-            types = assembly.GetTypes();
-        }
-        catch (ReflectionTypeLoadException ex)
-        {
-            Logger.Warning($"Type load warnings encountered while inspecting '{Path.GetFileName(path)}':");
-            if (ex.LoaderExceptions != null)
-            {
-                foreach (var loaderEx in ex.LoaderExceptions)
-                {
-                    if (loaderEx != null)
-                    {
-                        Logger.Warning($"  Loader exception: {loaderEx.Message}");
-                    }
-                }
-            }
-            types = ex.Types;
-        }
-        catch (Exception ex)
-        {
-            Logger.Error($"Failed to retrieve types from '{Path.GetFileName(path)}': {ex}");
+            Logger.Warning($"No types found in assembly: {Path.GetFileName(path)}");
             return;
         }
 
-        if (types == null)
+        foreach (Type type in types.Where(t => t != null))
         {
-            return;
-        }
-
-        foreach (Type type in types)
-        {
-            if (type == null)
-            {
-                continue;
-            }
-
             try
             {
                 if (!typeof(IDeadshotMod).IsAssignableFrom(type) ||
@@ -191,8 +152,7 @@ public class ModLoader : MonoBehaviour
                     continue;
                 }
 
-                IDeadshotMod mod = (IDeadshotMod)Activator.CreateInstance(type)!;
-                if (mod == null)
+                if (Activator.CreateInstance(type) is not IDeadshotMod mod)
                 {
                     Logger.Warning($"Failed to instantiate mod '{type.FullName}' from '{path}'.");
                     continue;
@@ -209,9 +169,7 @@ public class ModLoader : MonoBehaviour
                 }
 
                 Logger.Info($"Loading mod: {modName}");
-                try { Logger.Info($"  Description: {mod.Description}"); } catch { }
-                try { Logger.Info($"  Creator: {mod.Creator}"); } catch { }
-                try { Logger.Info($"  Version: {mod.Version}"); } catch { }
+                LogModMetaData(mod);
 
                 mod.Load();
                 LoadedMods.Add(mod);
@@ -220,6 +178,68 @@ public class ModLoader : MonoBehaviour
             {
                 Logger.Error($"Failed to instantiate or load mod '{type?.FullName}' from '{Path.GetFileName(path)}': {ex}");
             }
+        }
+    }
+
+    private static Assembly GetAssembly(string path)
+    {
+        try
+        {
+            return Assembly.LoadFrom(path);
+        }
+        catch (BadImageFormatException ex)
+        {
+            Logger.Error($"Corrupt or invalid mod assembly '{Path.GetFileName(path)}': {ex.Message}");
+            return null;
+        }
+        catch (FileNotFoundException ex)
+        {
+            Logger.Error($"Mod assembly file not found '{path}': {ex.Message}");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Failed to load assembly '{Path.GetFileName(path)}': {ex}");
+            return null;
+        }
+    }
+
+    private static Type[] GetTypes(Assembly assembly)
+    {
+        try
+        {
+            return assembly.GetTypes();
+        }
+        catch (ReflectionTypeLoadException ex)
+        {
+            if (ex.LoaderExceptions != null)
+            {
+                foreach (Exception loaderEx in ex.LoaderExceptions.Where(e => e != null))
+                {
+                    Logger.Warning($"  Loader exception: {loaderEx.Message}");
+                }
+            }
+            return ex.Types;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Failed to retrieve types from '{assembly.FullName}': {ex}");
+            return Array.Empty<Type>();
+        }
+    }
+
+    private static void LogModMetaData(IDeadshotMod mod)
+    {
+        try
+        {
+            Logger.Info($"  Name: {mod.Name}\n"
+                + $"  Description: {mod.Description}\n"
+                + $"  Creator: {mod.Creator}\n"
+                + $"  Version: {mod.Version}");
+        }
+        catch (Exception ex)
+        {
+            Logger.Warning($"Failed to read mod metadata: {ex.Message}");
         }
     }
 }

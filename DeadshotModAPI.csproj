@@ -70,6 +70,14 @@
       <HintPath>lib\UniverseLib.BIE.IL2CPP.Interop.dll</HintPath>
     </Reference>
 
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>lib\UnityEngine.UIModule.dll</HintPath>
+    </Reference>
+
+    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath>lib\UnityEngine.PhysicsModule.dll</HintPath>
+    </Reference>
+
   </ItemGroup>
 
   <ItemGroup>

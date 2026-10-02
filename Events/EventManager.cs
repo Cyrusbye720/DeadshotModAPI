@@ -30,7 +30,7 @@ public class EventManager : MonoBehaviour
         {
             try
             {
-                
+
                 if (DeadshotGameManager.INSTANCE == null)
                 {
                     Logger.Error("Cannot restart level: DeadshotGameManager.INSTANCE is null.");
@@ -39,7 +39,7 @@ public class EventManager : MonoBehaviour
 
 
                 float levelTime = DeadshotGameManager.INSTANCE.CompletionTime;
-                if (levelTime == _lastLevelTime)
+                if (levelTime - _lastLevelTime < 0.001f)
                 {
                     return;
                 }
@@ -48,7 +48,7 @@ public class EventManager : MonoBehaviour
 
                 LevelTimeChanged?.Invoke(levelTime);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Logger.Error($"Error in LevelPlaytimeEvent(): {ex}");
             }
@@ -69,7 +69,7 @@ public class EventManager : MonoBehaviour
 
                 return DeadshotGameManager.INSTANCE.CompletionTime;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Logger.Error($"Error in GetLevelPlaytime(): {ex}");
                 return 0;
@@ -82,7 +82,7 @@ public class EventManager : MonoBehaviour
             {
                 LevelCompleted?.Invoke(menu);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Logger.Error($"Error in LevelCompleted?.Invoke(): {ex}");
             }
@@ -108,7 +108,7 @@ public class EventManager : MonoBehaviour
 
                 LevelEvent.LevelCompletedEvent(screen);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Logger.Error($"Error in LevelCompleteMenu.OnEnable postfix: {ex}");
             }
