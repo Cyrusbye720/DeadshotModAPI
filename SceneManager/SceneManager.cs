@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Il2CppInterop.Runtime.Injection;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -83,6 +84,11 @@ public static class SceneManager
                 Logger.Log($"Loading Deadshot gameplay scene: {BaseGameplaySceneName}");
 
                 UnityEngine.SceneManagement.SceneManager.LoadScene(BaseGameplaySceneName, LoadSceneMode.Additive);
+            }
+
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<SceneLoadWaiter>())
+            {
+                ClassInjector.RegisterTypeInIl2Cpp<SceneLoadWaiter>();
             }
 
             var waiterObject = new GameObject("DeadshotModAPI_SceneLoadWaiter");

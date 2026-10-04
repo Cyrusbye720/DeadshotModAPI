@@ -23,13 +23,10 @@ public class EventManager : MonoBehaviour
         {
             try
             {
-
                 if (DeadshotGameManager.INSTANCE == null)
                 {
-                    Logger.Error("Cannot restart level: DeadshotGameManager.INSTANCE is null.");
                     return;
                 }
-
 
                 float levelTime = DeadshotGameManager.INSTANCE.CompletionTime;
                 if (levelTime - _lastLevelTime < 0.001f)
@@ -57,7 +54,7 @@ public class EventManager : MonoBehaviour
             {
                 if (DeadshotGameManager.INSTANCE == null)
                 {
-                    Logger.Error($"DeadshotGameManager.INSTANCE is null.");
+                    return 0f;
                 }
 
                 return DeadshotGameManager.INSTANCE.CompletionTime;
@@ -65,7 +62,7 @@ public class EventManager : MonoBehaviour
             catch (Exception ex)
             {
                 Logger.Error($"Error in GetLevelPlaytime(): {ex}");
-                return 0;
+                return 0f;
             }
         }
 
