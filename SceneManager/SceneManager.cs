@@ -1,7 +1,8 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
+using Il2CppInterop.Runtime.Injection;
 using UnityEngine;
-using Deadshot;
+using UnityEngine.SceneManagement;
 
 namespace DeadshotModAPI;
 
@@ -10,101 +11,127 @@ namespace DeadshotModAPI;
 /// </summary>
 public static class SceneManager
 {
-    private static AssetBundle _modsBundle;
+    internal const string BaseGameplaySceneName = "C1L2";
+
+    internal static bool IsSceneLoading { get; set; }
 
     /// <summary>
-    /// Loads a scene by its name using Deadshot's loading system.
+    /// Loads a scene while keeping Deadshot's gameplay scene loaded
+    /// so the existing player and gameplay systems remain available.
     /// </summary>
     /// <param name="sceneName">The name of the scene to load.</param>
-    public static void Load(string sceneName)
+    public static void LoadScene(string sceneName)
     {
+        Logger.Log($"LoadScene called with: '{sceneName}'");
+
         if (string.IsNullOrWhiteSpace(sceneName))
         {
-            Logger.Warning("Cannot load scene: sceneName is null, empty, or whitespace.");
+            Logger.Error("LoadScene received an empty scene name.");
+            return;
+        }
+
+        if (string.Equals(sceneName, BaseGameplaySceneName, StringComparison.OrdinalIgnoreCase))
+        {
+            Logger.Error($"Cannot load '{BaseGameplaySceneName}' as a custom scene; it is the base gameplay scene.");
+            return;
+        }
+
+        if (IsSceneLoading)
+        {
+            Logger.Log($"Scene load already in progress; ignoring duplicate request for '{sceneName}'.");
             return;
         }
 
         try
         {
-            LoadingScreen.LoadScene(sceneName);
+            IsSceneLoading = true;
+
+            AsyncOperation unloadOperation = null;
+            Scene existingScene = default;
+
+            for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
+            {
+                Scene scene = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i);
+
+                if (scene.name == sceneName)
+                {
+                    existingScene = scene;
+                    break;
+                }
+            }
+
+            if (existingScene.IsValid() && existingScene.isLoaded)
+            {
+                Logger.Log($"Scene '{sceneName}' is already loaded. Unloading before reloading.");
+                unloadOperation = UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(existingScene);
+            }
+
+            bool baseGameplaySceneLoaded = false;
+
+            for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
+            {
+                Scene scene = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i);
+
+                if (scene.name == BaseGameplaySceneName && scene.isLoaded)
+                {
+                    baseGameplaySceneLoaded = true;
+                    break;
+                }
+            }
+
+            if (!baseGameplaySceneLoaded)
+            {
+                Logger.Log($"Loading Deadshot gameplay scene: {BaseGameplaySceneName}");
+
+                UnityEngine.SceneManagement.SceneManager.LoadScene(BaseGameplaySceneName, LoadSceneMode.Additive);
+            }
+
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<SceneLoadWaiter>())
+            {
+                ClassInjector.RegisterTypeInIl2Cpp<SceneLoadWaiter>();
+            }
+
+            var waiterObject = new GameObject("DeadshotModAPI_SceneLoadWaiter");
+            UnityEngine.Object.DontDestroyOnLoad(waiterObject);
+            SceneLoadWaiter waiter = waiterObject.AddComponent<SceneLoadWaiter>();
+            waiter.Initialize(sceneName, unloadOperation);
         }
         catch (Exception ex)
         {
+            IsSceneLoading = false;
             Logger.Error($"Failed to load scene '{sceneName}': {ex}");
         }
     }
 
     /// <summary>
-    /// Loads a scene by its build index using Deadshot's loading system.
-    /// </summary>
-    /// <param name="sceneIndex">The build index of the scene to load.</param>
-    public static void Load(int sceneIndex)
-    {
-        if (sceneIndex < 0)
-        {
-            Logger.Warning($"Cannot load scene: invalid sceneIndex '{sceneIndex}'. Index must be non-negative.");
-            return;
-        }
-
-        try
-        {
-            LoadingScreen.LoadScene(sceneIndex);
-        }
-        catch (Exception ex)
-        {
-            Logger.Error($"Failed to load scene at index {sceneIndex}: {ex}");
-        }
-    }
-
-    /// <summary>
-    /// Loads the Deadshot Mod API UI asset bundle from BepInEx/mods/DeadshotModAPI.
+    /// Loads the Deadshot Mod API asset bundles from
+    /// BepInEx/mods/DeadshotModAPI.
     /// </summary>
     internal static void LoadModsBundle()
     {
-        if (_modsBundle != null)
-        {
-            Logger.Warning("Mods Menu bundle is already loaded.");
-            return;
-        }
-
-        string rootPath;
         try
         {
-            rootPath = BepInEx.Paths.BepInExRootPath;
-        }
-        catch (Exception ex)
-        {
-            Logger.Error($"Failed to determine BepInEx root path: {ex}");
-            return;
-        }
+            AssetBundleManager bundleManager = new();
 
-        if (string.IsNullOrWhiteSpace(rootPath))
-        {
-            Logger.Error("BepInEx root path is null or empty. Cannot discover mods.");
-            return;
-        }
-
-        string path = Path.Combine(rootPath, "mods", "DeadshotModAPI", "deadshotmodapi");
-        if (!File.Exists(path))
-        {
-            Logger.Error($"Mod bundle file does not exist at path: {path}");
-            return;
-        }
-
-        try
-        {
-            _modsBundle = AssetBundle.LoadFromFile(path);
-            if (_modsBundle == null)
+            List<string> bundlesFiles = new()
             {
-                Logger.Error($"Failed to load Mods Menu bundle: {path}");
+                "DeadshotModApi/deadshotmodapi",
+                "DeadshotModApi/deadshotapi_assets"
+            };
+
+            List<UniverseLib.AssetBundle> bundles = bundleManager.LoadAssetBundles(bundlesFiles);
+
+            if (bundles == null || bundles.Count == 0)
+            {
+                Logger.Error("Failed to load asset bundles.");
                 return;
             }
 
-            Logger.Info("Mods Menu bundle loaded successfully.");
+            Logger.Info($"Loaded {bundles.Count} asset bundles.");
         }
         catch (Exception ex)
         {
-            Logger.Error($"Failed to load Mods Menu bundle from '{path}': {ex}");
+            Logger.Error($"Failed to load Mods Menu bundle: {ex}");
         }
     }
 }

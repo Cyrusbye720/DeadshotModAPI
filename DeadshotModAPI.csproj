@@ -5,6 +5,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <DefaultItemExcludes>$(DefaultItemExcludes);DeadshotModAPI.Tests/**;examples/**</DefaultItemExcludes>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>
 
   <ItemGroup>
@@ -63,6 +64,18 @@
 
     <Reference Include="Il2CppSystem">
       <HintPath>lib\Il2CppSystem.dll</HintPath>
+    </Reference>
+
+    <Reference Include="UniverseLib">
+      <HintPath>lib\UniverseLib.BIE.IL2CPP.Interop.dll</HintPath>
+    </Reference>
+
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>lib\UnityEngine.UIModule.dll</HintPath>
+    </Reference>
+
+    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath>lib\UnityEngine.PhysicsModule.dll</HintPath>
     </Reference>
 
   </ItemGroup>

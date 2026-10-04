@@ -8,38 +8,28 @@ namespace DeadshotModAPI;
 
 public class EventManager : MonoBehaviour
 {
-    public static void Update()
+    internal void Update()
     {
-        LevelEvent.Update();
+        LevelEvent.LevelPlaytimeEvent();
     }
 
     public static class LevelEvent
     {
         private static float _lastLevelTime;
-
         public static event Action<float> LevelTimeChanged;
-
         public static event Action<LevelCompleteScreen> LevelCompleted;
-
-        internal static void Update()
-        {
-            LevelPlaytimeEvent();
-        }
 
         internal static void LevelPlaytimeEvent()
         {
             try
             {
-                
                 if (DeadshotGameManager.INSTANCE == null)
                 {
-                    Logger.Error("Cannot restart level: DeadshotGameManager.INSTANCE is null.");
                     return;
                 }
 
-
                 float levelTime = DeadshotGameManager.INSTANCE.CompletionTime;
-                if (levelTime == _lastLevelTime)
+                if (levelTime - _lastLevelTime < 0.001f)
                 {
                     return;
                 }
@@ -48,7 +38,7 @@ public class EventManager : MonoBehaviour
 
                 LevelTimeChanged?.Invoke(levelTime);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Logger.Error($"Error in LevelPlaytimeEvent(): {ex}");
             }
@@ -64,15 +54,15 @@ public class EventManager : MonoBehaviour
             {
                 if (DeadshotGameManager.INSTANCE == null)
                 {
-                    Logger.Error($"DeadshotGameManager.INSTANCE is null.");
+                    return 0f;
                 }
 
                 return DeadshotGameManager.INSTANCE.CompletionTime;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Logger.Error($"Error in GetLevelPlaytime(): {ex}");
-                return 0;
+                return 0f;
             }
         }
 
@@ -82,7 +72,7 @@ public class EventManager : MonoBehaviour
             {
                 LevelCompleted?.Invoke(menu);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Logger.Error($"Error in LevelCompleted?.Invoke(): {ex}");
             }
@@ -108,7 +98,7 @@ public class EventManager : MonoBehaviour
 
                 LevelEvent.LevelCompletedEvent(screen);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Logger.Error($"Error in LevelCompleteMenu.OnEnable postfix: {ex}");
             }
