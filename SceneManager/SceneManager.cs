@@ -29,6 +29,12 @@ public static class SceneManager
             return;
         }
 
+        if (string.Equals(sceneName, BaseGameplaySceneName, StringComparison.OrdinalIgnoreCase))
+        {
+            Logger.Error($"Cannot load '{BaseGameplaySceneName}' as a custom scene; it is the base gameplay scene.");
+            return;
+        }
+
         if (IsSceneLoading)
         {
             Logger.Log($"Scene load already in progress; ignoring duplicate request for '{sceneName}'.");
