@@ -145,6 +145,13 @@ internal class SceneLoadWaiter : MonoBehaviour
                 controller.enabled = true;
             }
 
+            if (customScene.IsValid() && customScene.isLoaded)
+            {
+                UnityEngine.SceneManagement.SceneManager.SetActiveScene(customScene);
+            }
+
+            UnloadMenuScene();
+
             _playerPlaced = true;
             Logger.Log($"Moved player to CustomPlayerSpawn: {spawnPoint.transform.position}");
             Destroy(gameObject);
@@ -244,7 +251,7 @@ internal class SceneLoadWaiter : MonoBehaviour
                 continue;
             }
 
-            if (canvas.gameObject.scene.name == "MainMenu")
+            if (canvas.gameObject.scene.name == "MainMenu" || canvas.gameObject.scene.name == "MenuScene")
             {
                 canvas.enabled = false;
             }
@@ -259,12 +266,12 @@ internal class SceneLoadWaiter : MonoBehaviour
                 continue;
             }
 
-            if (renderer.gameObject.scene.name != SceneManager.BaseGameplaySceneName)
+            if (renderer.gameObject.scene.name == _sceneName)
             {
                 continue;
             }
 
-            if (renderer.transform.IsChildOf(_player.transform))
+            if (_player != null && renderer.transform.IsChildOf(_player.transform))
             {
                 continue;
             }
@@ -284,10 +291,32 @@ internal class SceneLoadWaiter : MonoBehaviour
                 continue;
             }
 
-            if (renderer.gameObject.scene.name == SceneManager.BaseGameplaySceneName)
+            if (renderer.gameObject.scene.name == SceneManager.BaseGameplaySceneName ||
+                renderer.gameObject.scene.name == "MenuScene" ||
+                renderer.gameObject.scene.name == "MainMenu")
             {
                 renderer.enabled = true;
             }
+        }
+    }
+
+    private static void UnloadMenuScene()
+    {
+        try
+        {
+            for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
+            {
+                Scene scene = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i);
+                if ((scene.name == "MenuScene" || scene.name == "MainMenu") && scene.IsValid() && scene.isLoaded)
+                {
+                    Logger.Log($"Unloading menu scene: {scene.name}");
+                    UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(scene);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Failed to unload menu scene: {ex}");
         }
     }
 
