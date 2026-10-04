@@ -6,6 +6,7 @@ namespace DeadshotModAPI;
 
 internal class SceneLoadWaiter : MonoBehaviour
 {
+    private const int MaxSceneLoadAttempts = 300;
     private const int MaxSpawnSearchAttempts = 300;
 
     private string _sceneName = string.Empty;
@@ -14,6 +15,7 @@ internal class SceneLoadWaiter : MonoBehaviour
     private bool _initialized;
     private bool _sceneLoadRequested;
     private bool _playerPlaced;
+    private int _sceneLoadAttempts;
     private int _spawnSearchAttempts;
 
     internal void Initialize(string sceneName, AsyncOperation unloadOperation = null)
@@ -79,6 +81,16 @@ internal class SceneLoadWaiter : MonoBehaviour
                     {
                         _sceneLoadRequested = false;
                         Logger.Error($"Failed to load custom scene '{_sceneName}': {ex}");
+                        Destroy(gameObject);
+                        return;
+                    }
+                }
+                else
+                {
+                    _sceneLoadAttempts++;
+                    if (_sceneLoadAttempts > MaxSceneLoadAttempts)
+                    {
+                        Logger.Error($"Timed out waiting for scene '{_sceneName}' to load.");
                         Destroy(gameObject);
                         return;
                     }
