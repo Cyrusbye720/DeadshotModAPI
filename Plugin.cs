@@ -15,6 +15,5 @@ public class Plugin : BasePlugin
         harmony.PatchAll();
         AddComponent<ModLoader>();
         AddComponent<EventManager>();
-        AddComponent<SceneLoadWaiter>();
     }
 }

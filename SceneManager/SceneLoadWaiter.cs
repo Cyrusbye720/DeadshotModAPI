@@ -13,6 +13,7 @@ internal class SceneLoadWaiter : MonoBehaviour
     private GameObject _player;
     private bool _initialized;
     private bool _sceneLoadRequested;
+    private bool _playerPlaced;
     private int _spawnSearchAttempts;
 
     internal void Initialize(string sceneName, AsyncOperation unloadOperation = null)
@@ -132,12 +133,23 @@ internal class SceneLoadWaiter : MonoBehaviour
                 controller.enabled = true;
             }
 
+            _playerPlaced = true;
             Logger.Log($"Moved player to CustomPlayerSpawn: {spawnPoint.transform.position}");
             Destroy(gameObject);
         }
         catch (Exception ex)
         {
             Logger.Error($"SceneLoadWaiter.Update failed: {ex}");
+        }
+    }
+
+    internal void OnDestroy()
+    {
+        SceneManager.IsSceneLoading = false;
+
+        if (!_playerPlaced)
+        {
+            RestoreMenuAndSceneRenderers();
         }
     }
 
@@ -150,12 +162,6 @@ internal class SceneLoadWaiter : MonoBehaviour
                 return;
             }
 
-            if (!DisableAllCameras())
-            {
-                return;
-            }
-
-            DisableMenuAndSceneRenderers();
             _initialized = true;
         }
         catch (Exception ex)
@@ -252,6 +258,24 @@ internal class SceneLoadWaiter : MonoBehaviour
             }
 
             renderer.enabled = false;
+        }
+    }
+
+    private void RestoreMenuAndSceneRenderers()
+    {
+        foreach (Renderer renderer in FindObjectsByType<Renderer>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None))
+        {
+            if (renderer == null)
+            {
+                continue;
+            }
+
+            if (renderer.gameObject.scene.name == SceneManager.BaseGameplaySceneName)
+            {
+                renderer.enabled = true;
+            }
         }
     }
 

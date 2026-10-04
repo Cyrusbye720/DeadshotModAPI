@@ -12,6 +12,8 @@ public static class SceneManager
 {
     internal const string BaseGameplaySceneName = "C1L2";
 
+    internal static bool IsSceneLoading { get; set; }
+
     /// <summary>
     /// Loads a scene while keeping Deadshot's gameplay scene loaded
     /// so the existing player and gameplay systems remain available.
@@ -27,13 +29,15 @@ public static class SceneManager
             return;
         }
 
+        if (IsSceneLoading)
+        {
+            Logger.Log($"Scene load already in progress; ignoring duplicate request for '{sceneName}'.");
+            return;
+        }
+
         try
         {
-            if (UnityEngine.Object.FindAnyObjectByType<SceneLoadWaiter>() != null)
-            {
-                Logger.Log($"Scene load already in progress; ignoring duplicate request for '{sceneName}'.");
-                return;
-            }
+            IsSceneLoading = true;
 
             AsyncOperation unloadOperation = null;
             Scene existingScene = default;
@@ -82,6 +86,7 @@ public static class SceneManager
         }
         catch (Exception ex)
         {
+            IsSceneLoading = false;
             Logger.Error($"Failed to load scene '{sceneName}': {ex}");
         }
     }
