@@ -69,7 +69,18 @@ internal class SceneLoadWaiter : MonoBehaviour
                 {
                     _sceneLoadRequested = true;
                     Logger.Log($"Loading custom scene: {_sceneName}");
-                    UnityEngine.SceneManagement.SceneManager.LoadScene(_sceneName, LoadSceneMode.Additive);
+
+                    try
+                    {
+                        UnityEngine.SceneManagement.SceneManager.LoadScene(_sceneName, LoadSceneMode.Additive);
+                    }
+                    catch (Exception ex)
+                    {
+                        _sceneLoadRequested = false;
+                        Logger.Error($"Failed to load custom scene '{_sceneName}': {ex}");
+                        Destroy(gameObject);
+                        return;
+                    }
                 }
 
                 return;
