@@ -29,6 +29,12 @@ public static class SceneManager
 
         try
         {
+            if (UnityEngine.Object.FindAnyObjectByType<SceneLoadWaiter>() != null)
+            {
+                Logger.Log($"Scene load already in progress; ignoring duplicate request for '{sceneName}'.");
+                return;
+            }
+
             AsyncOperation unloadOperation = null;
             Scene existingScene = default;
 
@@ -69,16 +75,6 @@ public static class SceneManager
                 UnityEngine.SceneManagement.SceneManager.LoadScene(BaseGameplaySceneName, LoadSceneMode.Additive);
             }
 
-            SceneLoadWaiter[] existingWaiters = UnityEngine.Object.FindObjectsByType<SceneLoadWaiter>(
-                FindObjectsInactive.Include,
-                FindObjectsSortMode.None
-            );
-
-            for (int i = 0; i < existingWaiters.Length; i++)
-            {
-                UnityEngine.Object.Destroy(existingWaiters[i].gameObject);
-            }
-
             var waiterObject = new GameObject("DeadshotModAPI_SceneLoadWaiter");
             UnityEngine.Object.DontDestroyOnLoad(waiterObject);
             SceneLoadWaiter waiter = waiterObject.AddComponent<SceneLoadWaiter>();
@@ -108,7 +104,7 @@ public static class SceneManager
 
             List<UniverseLib.AssetBundle> bundles = bundleManager.LoadAssetBundles(bundlesFiles);
 
-            if (bundles == null)
+            if (bundles == null || bundles.Count == 0)
             {
                 Logger.Error("Failed to load asset bundles.");
                 return;
