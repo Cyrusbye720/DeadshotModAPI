@@ -145,13 +145,6 @@ internal class SceneLoadWaiter : MonoBehaviour
                 controller.enabled = true;
             }
 
-            if (customScene.IsValid() && customScene.isLoaded)
-            {
-                UnityEngine.SceneManagement.SceneManager.SetActiveScene(customScene);
-            }
-
-            UnloadMenuScene();
-
             _playerPlaced = true;
             Logger.Log($"Moved player to CustomPlayerSpawn: {spawnPoint.transform.position}");
             Destroy(gameObject);
@@ -300,25 +293,7 @@ internal class SceneLoadWaiter : MonoBehaviour
         }
     }
 
-    private static void UnloadMenuScene()
-    {
-        try
-        {
-            for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
-            {
-                Scene scene = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i);
-                if ((scene.name == "MenuScene" || scene.name == "MainMenu") && scene.IsValid() && scene.isLoaded)
-                {
-                    Logger.Log($"Unloading menu scene: {scene.name}");
-                    UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(scene);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.Error($"Failed to unload menu scene: {ex}");
-        }
-    }
+
 
     private Scene GetCustomScene()
     {
