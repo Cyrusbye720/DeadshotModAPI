@@ -10,6 +10,8 @@ namespace DeadshotModAPI;
 /// </summary>
 public static class SceneManager
 {
+    internal const string BaseGameplaySceneName = "C1L2";
+
     /// <summary>
     /// Loads a scene while keeping Deadshot's gameplay scene loaded
     /// so the existing player and gameplay systems remain available.
@@ -27,6 +29,7 @@ public static class SceneManager
 
         try
         {
+            AsyncOperation unloadOperation = null;
             Scene existingScene = default;
 
             for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
@@ -43,33 +46,43 @@ public static class SceneManager
             if (existingScene.IsValid() && existingScene.isLoaded)
             {
                 Logger.Log($"Scene '{sceneName}' is already loaded. Unloading before reloading.");
-                _ = UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(existingScene);
+                unloadOperation = UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(existingScene);
             }
 
-            bool c1l2Loaded = false;
+            bool baseGameplaySceneLoaded = false;
 
             for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
             {
                 Scene scene = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i);
 
-                if (scene.name == "C1L2" && scene.isLoaded)
+                if (scene.name == BaseGameplaySceneName && scene.isLoaded)
                 {
-                    c1l2Loaded = true;
+                    baseGameplaySceneLoaded = true;
                     break;
                 }
             }
 
-            if (!c1l2Loaded)
+            if (!baseGameplaySceneLoaded)
             {
-                Logger.Log("Loading Deadshot gameplay scene: C1L2");
+                Logger.Log($"Loading Deadshot gameplay scene: {BaseGameplaySceneName}");
 
-                UnityEngine.SceneManagement.SceneManager.LoadScene("C1L2", LoadSceneMode.Additive);
+                UnityEngine.SceneManagement.SceneManager.LoadScene(BaseGameplaySceneName, LoadSceneMode.Additive);
+            }
+
+            SceneLoadWaiter[] existingWaiters = UnityEngine.Object.FindObjectsByType<SceneLoadWaiter>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None
+            );
+
+            for (int i = 0; i < existingWaiters.Length; i++)
+            {
+                UnityEngine.Object.Destroy(existingWaiters[i].gameObject);
             }
 
             var waiterObject = new GameObject("DeadshotModAPI_SceneLoadWaiter");
             UnityEngine.Object.DontDestroyOnLoad(waiterObject);
             SceneLoadWaiter waiter = waiterObject.AddComponent<SceneLoadWaiter>();
-            waiter.Initialize(sceneName);
+            waiter.Initialize(sceneName, unloadOperation);
         }
         catch (Exception ex)
         {

@@ -8,7 +8,7 @@ namespace DeadshotModAPI;
 
 public class EventManager : MonoBehaviour
 {
-    public static void Update()
+    internal void Update()
     {
         LevelEvent.LevelPlaytimeEvent();
     }

@@ -6,13 +6,16 @@ namespace DeadshotModAPI;
 
 internal class SceneLoadWaiter : MonoBehaviour
 {
+    private const int MaxSpawnSearchAttempts = 300;
+
     private string _sceneName = string.Empty;
+    private AsyncOperation _unloadOperation;
     private GameObject _player;
     private bool _initialized;
     private bool _sceneLoadRequested;
-    private bool _playerPlaced;
+    private int _spawnSearchAttempts;
 
-    internal void Initialize(string sceneName)
+    internal void Initialize(string sceneName, AsyncOperation unloadOperation = null)
     {
         try
         {
@@ -21,12 +24,12 @@ internal class SceneLoadWaiter : MonoBehaviour
             if (string.IsNullOrWhiteSpace(sceneName))
             {
                 Logger.Error("SceneLoadWaiter received an empty scene name.");
-
                 Destroy(gameObject);
                 return;
             }
 
             _sceneName = sceneName;
+            _unloadOperation = unloadOperation;
         }
         catch (Exception ex)
         {
@@ -43,6 +46,16 @@ internal class SceneLoadWaiter : MonoBehaviour
                 return;
             }
 
+            if (_unloadOperation != null)
+            {
+                if (!_unloadOperation.isDone)
+                {
+                    return;
+                }
+
+                _unloadOperation = null;
+            }
+
             if (!_initialized)
             {
                 InitializePlayer();
@@ -55,34 +68,30 @@ internal class SceneLoadWaiter : MonoBehaviour
                 if (!_sceneLoadRequested)
                 {
                     _sceneLoadRequested = true;
-
                     Logger.Log($"Loading custom scene: {_sceneName}");
-
                     UnityEngine.SceneManagement.SceneManager.LoadScene(_sceneName, LoadSceneMode.Additive);
                 }
 
                 return;
             }
 
-            if (_playerPlaced)
-            {
-                return;
-            }
-
-            // Unity's overloaded == also catches destroyed objects.
             if (_player == null)
             {
-                Logger.Error("Player is not available yet; cannot place player.");
+                _initialized = false;
                 return;
             }
-
-            Logger.Log($"Custom scene loaded: {_sceneName}");
 
             GameObject spawnPoint = FindCustomPlayerSpawn(customScene);
 
             if (spawnPoint == null)
             {
-                Logger.Error("Could not find CustomPlayerSpawn.");
+                _spawnSearchAttempts++;
+                if (_spawnSearchAttempts > MaxSpawnSearchAttempts)
+                {
+                    Logger.Error($"Could not find CustomPlayerSpawn in scene '{_sceneName}'.");
+                    Destroy(gameObject);
+                }
+
                 return;
             }
 
@@ -91,8 +100,12 @@ internal class SceneLoadWaiter : MonoBehaviour
             if (controller == null)
             {
                 Logger.Error("Failed to find player controller.");
+                Destroy(gameObject);
                 return;
             }
+
+            DisableAllCameras();
+            DisableMenuAndSceneRenderers();
 
             controller.enabled = false;
 
@@ -109,8 +122,7 @@ internal class SceneLoadWaiter : MonoBehaviour
             }
 
             Logger.Log($"Moved player to CustomPlayerSpawn: {spawnPoint.transform.position}");
-
-            _playerPlaced = true;
+            Destroy(gameObject);
         }
         catch (Exception ex)
         {
@@ -122,11 +134,17 @@ internal class SceneLoadWaiter : MonoBehaviour
     {
         try
         {
-            if (!GetPlayer()) return;
-            if (!DisableAllCameras()) return;
+            if (!GetPlayer())
+            {
+                return;
+            }
+
+            if (!DisableAllCameras())
+            {
+                return;
+            }
 
             DisableMenuAndSceneRenderers();
-
             _initialized = true;
         }
         catch (Exception ex)
@@ -139,15 +157,8 @@ internal class SceneLoadWaiter : MonoBehaviour
     {
         Deadshot.GameManager gameManager = Deadshot.GameManager.INSTANCE;
 
-        if (gameManager == null)
+        if (gameManager == null || gameManager.PlayerManager == null)
         {
-            Logger.Error("Could not find GameManager.");
-            return false;
-        }
-
-        if (gameManager.PlayerManager == null)
-        {
-            Logger.Error("Could not find PlayerManager.");
             return false;
         }
 
@@ -155,7 +166,6 @@ internal class SceneLoadWaiter : MonoBehaviour
 
         if (_player == null)
         {
-            Logger.Error("Could not find player GameObject.");
             return false;
         }
 
@@ -169,7 +179,6 @@ internal class SceneLoadWaiter : MonoBehaviour
 
         if (playerCameraTransform == null)
         {
-            Logger.Error("Could not find Player/Head/MainCamera.");
             return false;
         }
 
@@ -177,7 +186,6 @@ internal class SceneLoadWaiter : MonoBehaviour
 
         if (playerCamera == null)
         {
-            Logger.Error("Player MainCamera has no Camera component.");
             return false;
         }
 
@@ -222,7 +230,7 @@ internal class SceneLoadWaiter : MonoBehaviour
                 continue;
             }
 
-            if (renderer.gameObject.scene.name != "C1L2")
+            if (renderer.gameObject.scene.name != SceneManager.BaseGameplaySceneName)
             {
                 continue;
             }
@@ -304,9 +312,11 @@ internal class SceneLoadWaiter : MonoBehaviour
                 continue;
             }
 
-            if (child.name == name)
+            GameObject result = FindChildRecursive(child, name);
+
+            if (result != null)
             {
-                return child.gameObject;
+                return result;
             }
         }
 
